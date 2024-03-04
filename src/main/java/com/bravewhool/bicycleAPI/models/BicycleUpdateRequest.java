@@ -10,7 +10,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class UpdateBicycleRequest {
+public class BicycleUpdateRequest {
 
     @NotBlank(message = "Bicycle request exception - invalid name: name is empty")
     private String name;

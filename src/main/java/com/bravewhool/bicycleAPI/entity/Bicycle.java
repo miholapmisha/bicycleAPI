@@ -4,11 +4,13 @@ import com.bravewhool.bicycleAPI.entity.enums.BicycleFrameType;
 import com.bravewhool.bicycleAPI.entity.enums.BicycleType;
 import com.bravewhool.bicycleAPI.entity.enums.MaterialType;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "bicycles")
@@ -47,4 +49,8 @@ public class Bicycle {
 
     @Column(name = "color")
     private String color;
+
+    @OneToMany
+    @JoinColumn(name = "bicycle_id")
+    private List<BicycleImage> images;
 }

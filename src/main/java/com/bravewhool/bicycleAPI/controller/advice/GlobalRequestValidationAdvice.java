@@ -1,4 +1,4 @@
-package com.bravewhool.bicycleAPI.controller;
+package com.bravewhool.bicycleAPI.controller.advice;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;

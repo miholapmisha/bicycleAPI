@@ -5,11 +5,13 @@ import com.bravewhool.bicycleAPI.entity.enums.BicycleType;
 import com.bravewhool.bicycleAPI.entity.enums.MaterialType;
 import lombok.Data;
 
-import java.awt.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 public class BicycleDTO {
+
+    private Integer id;
 
     private String name;
 
@@ -26,5 +28,7 @@ public class BicycleDTO {
     private BigDecimal wheelSize;
 
     private String color;
+
+    private List<String> imagesUrls;
 
 }

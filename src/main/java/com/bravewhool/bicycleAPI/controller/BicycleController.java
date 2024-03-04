@@ -1,15 +1,19 @@
 package com.bravewhool.bicycleAPI.controller;
 
 import com.bravewhool.bicycleAPI.dto.BicycleDTO;
-import com.bravewhool.bicycleAPI.models.UpdateBicycleRequest;
+import com.bravewhool.bicycleAPI.models.BicycleUpdateRequest;
+import com.bravewhool.bicycleAPI.service.BicycleImageService;
 import com.bravewhool.bicycleAPI.service.BicycleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/bicycle")
@@ -17,6 +21,18 @@ import java.util.Map;
 public class BicycleController {
 
     private final BicycleService bicycleService;
+
+    private final BicycleImageService bicycleImageService;
+
+    @PostMapping("/image")
+    public ResponseEntity<String> uploadFile(@RequestParam MultipartFile image, @RequestParam Long bicycleId) {
+        return ResponseEntity.ok(bicycleImageService.uploadBicycleImage(image, bicycleId));
+    }
+
+    @PostMapping
+    public ResponseEntity<BicycleDTO> saveBicycle(@RequestBody @Validated BicycleUpdateRequest request) {
+        return ResponseEntity.ok(bicycleService.saveBicycle(request));
+    }
 
     @GetMapping("/page-request")
     public Page<BicycleDTO> getBicyclesByPageRequest(@RequestParam int size, @RequestParam int page) {
@@ -48,8 +64,13 @@ public class BicycleController {
         return bicycleService.getBicyclesByName(input);
     }
 
+    @GetMapping("/colors")
+    public Set<String> getBicyclesColors() {
+        return bicycleService.getUsedBicycleColors();
+    }
+
     @PutMapping("/{id}")
-    public void updateBicycle(@RequestBody @Validated UpdateBicycleRequest request, @PathVariable Long id) {
+    public void updateBicycle(@RequestBody @Validated BicycleUpdateRequest request, @PathVariable Long id) {
         bicycleService.updateBicycle(request, id);
     }
 

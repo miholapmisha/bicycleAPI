@@ -3,13 +3,13 @@ package com.bravewhool.bicycleAPI.service;
 import com.bravewhool.bicycleAPI.dto.BicycleDTO;
 import com.bravewhool.bicycleAPI.entity.Bicycle;
 import com.bravewhool.bicycleAPI.exception.BicycleNotFoundException;
-import com.bravewhool.bicycleAPI.models.UpdateBicycleRequest;
+import com.bravewhool.bicycleAPI.models.BicycleDTOConverter;
+import com.bravewhool.bicycleAPI.models.BicycleUpdateRequest;
 import com.bravewhool.bicycleAPI.models.specification.EntitySearchCriteria;
 import com.bravewhool.bicycleAPI.models.specification.SearchOperator;
 import com.bravewhool.bicycleAPI.models.specification.SearchSpecification;
 import com.bravewhool.bicycleAPI.repository.BicycleRepository;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -29,55 +29,71 @@ public class BicycleService {
 
     private final SearchSpecification<Bicycle> searchSpecification;
 
-    private final ModelMapper modelMapper;
+    private final BicycleDTOConverter bicycleEntityConverter;
 
     public List<BicycleDTO> getBicyclesLikeName(String name) {
-        return convertToDTO(bicycleRepository.findByNameContainingIgnoreCase(name));
+        return bicycleEntityConverter.convertToDTO(bicycleRepository.findByNameContainingIgnoreCase(name));
     }
 
     public List<BicycleDTO> getBicyclesByName(String name) {
-        return convertToDTO(bicycleRepository.findBicycleByName(name));
+        return bicycleEntityConverter.convertToDTO(bicycleRepository.findBicycleByName(name));
     }
 
     public Page<BicycleDTO> getBicyclesByPageRequest(int size, int page) {
 
         return bicycleRepository.findAll(PageRequest.of(page, size))
-                .map(entity -> modelMapper.map(entity, BicycleDTO.class));
+                .map(bicycleEntityConverter::convertToDTO);
     }
 
     @Transactional
-    public void updateBicycle(UpdateBicycleRequest request, Long id) {
-        Optional<Bicycle> bicycle = bicycleRepository.findById(id);
+    public void updateBicycle(BicycleUpdateRequest request, Long id) {
+        Bicycle bicycle = bicycleRepository.findById(id)
+                .orElseThrow(() -> new BicycleNotFoundException(id));
 
-        bicycle.ifPresent(value -> {
-            value.setBicycleType(request.getBicycleType());
-            value.setName(request.getName());
-            value.setColor(request.getColor());
-            value.setSale(request.isSale());
-            value.setPrice(request.getPrice());
-            value.setMaterialType(request.getMaterialType());
-            value.setWheelSize(request.getWheelSize());
+        assignPropertiesFromRequest(bicycle, request);
+        bicycleRepository.save(bicycle);
 
-            bicycleRepository.save(value);
-        });
+    }
 
+    @Transactional
+    public BicycleDTO saveBicycle(BicycleUpdateRequest request) {
+
+        Bicycle bicycle = new Bicycle();
+
+        assignPropertiesFromRequest(bicycle, request);
+        bicycleRepository.save(bicycle);
+
+        return bicycleEntityConverter.convertToDTO(bicycle);
+    }
+
+    private void assignPropertiesFromRequest(Bicycle bicycle, BicycleUpdateRequest request) {
+
+        bicycle.setBicycleType(request.getBicycleType());
+        bicycle.setName(request.getName());
+        bicycle.setColor(request.getColor());
+        bicycle.setSale(request.isSale());
+        bicycle.setPrice(request.getPrice());
+        bicycle.setMaterialType(request.getMaterialType());
+        bicycle.setWheelSize(request.getWheelSize());
     }
 
     @Transactional
     public void deleteBicycle(Long id) {
-        Optional<Bicycle> bicycle = bicycleRepository.findById(id);
-        bicycle.ifPresent(value -> bicycleRepository.removeById(value.getId()));
+        Bicycle bicycle = bicycleRepository.findById(id)
+                .orElseThrow(() -> new BicycleNotFoundException(id));
+
+        bicycleRepository.removeById(bicycle.getId());
     }
 
-    public List<BicycleDTO> findBicyclesByIds(List<Long> list) {
-        return list.stream().map(this::findBicyclesById).toList();
+    public List<BicycleDTO> findBicyclesByIds(List<Long> ids) {
+        return ids.stream().map(this::findBicyclesById).toList();
     }
 
     public BicycleDTO findBicyclesById(Long id) {
         Bicycle bicycle = bicycleRepository.findById(id)
                 .orElseThrow(() -> new BicycleNotFoundException(id));
 
-        return modelMapper.map(bicycle, BicycleDTO.class);
+        return bicycleEntityConverter.convertToDTO(bicycle);
     }
 
     public List<BicycleDTO> findBicyclesBySearchRequest(Map<String, Object> searchRequest) {
@@ -98,12 +114,10 @@ public class BicycleService {
                             .toList());
 
                 }
-                case "lowerBoundPrice" ->
-                        fieldNameToCriteriaMap.put("lowerBoundPrice",
-                                List.of(new EntitySearchCriteria("price", entry.getValue(), SearchOperator.GREATER_THAN)));
-                case "upperBoundPrice" ->
-                        fieldNameToCriteriaMap.put("lowerBoundPrice",
-                                List.of(new EntitySearchCriteria("price", entry.getValue(), SearchOperator.LESS_THAN)));
+                case "lowerBoundPrice" -> fieldNameToCriteriaMap.put("lowerBoundPrice",
+                        List.of(new EntitySearchCriteria("price", entry.getValue(), SearchOperator.GREATER_THAN)));
+                case "upperBoundPrice" -> fieldNameToCriteriaMap.put("lowerBoundPrice",
+                        List.of(new EntitySearchCriteria("price", entry.getValue(), SearchOperator.LESS_THAN)));
                 case "sale" -> {
                     Boolean isTrue = (Boolean) entry.getValue();
                     if (isTrue)
@@ -116,14 +130,11 @@ public class BicycleService {
 
         List<Bicycle> searchBicycles = bicycleRepository.findAll(searchSpecification.getFinalSpecification(fieldNameToCriteriaMap));
 
-        return convertToDTO(searchBicycles);
+        return bicycleEntityConverter.convertToDTO(searchBicycles);
     }
 
-    private List<BicycleDTO> convertToDTO(List<Bicycle> bicycles) {
-        return bicycles.stream()
-                .map(entity -> modelMapper.map(entity, BicycleDTO.class))
-                .toList();
+    public Set<String> getUsedBicycleColors() {
+        return bicycleRepository.getUniqueColors();
     }
 
 }
-

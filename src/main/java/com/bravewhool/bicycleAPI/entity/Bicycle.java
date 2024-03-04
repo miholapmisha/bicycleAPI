@@ -4,7 +4,6 @@ import com.bravewhool.bicycleAPI.entity.enums.BicycleFrameType;
 import com.bravewhool.bicycleAPI.entity.enums.BicycleType;
 import com.bravewhool.bicycleAPI.entity.enums.MaterialType;
 import jakarta.persistence.*;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

@@ -1,12 +1,21 @@
-FROM gradle:jdk17-jammy AS build
-COPY --chown=gradle:gradle . /home/gradle/src
-WORKDIR /home/gradle/src
-RUN gradle build --no-daemon
+# Use an official OpenJDK runtime as a base image
+FROM adoptopenjdk:17-jre-hotspot
 
-LABEL org.name="hezf"
-#
-# Package stage
-#
-FROM eclipse-temurin:17-jdk-jammy
-COPY --from=build /home/gradle/src/build/libs/docker-0.0.1-SNAPSHOT.jar app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the Gradle files and scripts
+COPY build.gradle settings.gradle gradlew ./
+COPY gradle/ gradle/
+
+# Copy the source code
+COPY src/ src/
+
+# Build the application
+RUN ./gradlew build
+
+# Expose the port that the application will run on
+EXPOSE 8080
+
+# Specify the command to run on container startup
+CMD ["java", "-jar", "build/libs/your-application-name-0.0.1-SNAPSHOT.jar"]

@@ -17,6 +17,10 @@ jar {
 	}
 }
 
+bootJar {
+	archiveFileName = 'demo.jar'
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor

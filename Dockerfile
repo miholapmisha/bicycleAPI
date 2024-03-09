@@ -18,4 +18,4 @@ RUN ./gradlew build
 EXPOSE 8080
 
 # Specify the command to run on container startup
-CMD ["java", "-jar", "build/libs/your-application-name-0.0.1-SNAPSHOT.jar"]
+CMD ["java", "-jar", "build/libs/bicycleAPI-0.0.1-SNAPSHOT-plain.jar"]

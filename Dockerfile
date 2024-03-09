@@ -1,10 +1,12 @@
-FROM gradle:8.5.0-jdk17 AS build
-COPY . .
+FROM gradle:jdk17-jammy AS build
+COPY --chown=gradle:gradle . /home/gradle/src
+WORKDIR /home/gradle/src
 RUN gradle build --no-daemon
 
-FROM openjdk:17.0.1-jdk-slim
-COPY --from=build /build/libs/bicycleAPI-0.0.1-SNAPSHOT-plain.jar bicycleAPI-0.0.1-SNAPSHOT-plain.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "bicycleAPI-0.0.1-SNAPSHOT-plain.jar"]
-
-
+LABEL org.name="hezf"
+#
+# Package stage
+#
+FROM eclipse-temurin:17-jdk-jammy
+COPY --from=build /home/gradle/src/build/libs/docker-0.0.1-SNAPSHOT.jar app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]

@@ -5,8 +5,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.io.File;
-
 @Configuration
 public class BicycleImageStoreConfig implements WebMvcConfigurer {
 
@@ -16,9 +14,9 @@ public class BicycleImageStoreConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
 
-        if(!registry.hasMappingForPattern(filesystemStorageFolder)) {
-            registry.addResourceHandler(filesystemStorageFolder + File.separator + "**")
-                    .addResourceLocations("file:" + filesystemStorageFolder);
+        if (!registry.hasMappingForPattern(filesystemStorageFolder)) {
+            registry.addResourceHandler("/**")
+                    .addResourceLocations("file:///" + filesystemStorageFolder);
         }
 
     }

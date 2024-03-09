@@ -8,18 +8,17 @@ import com.bravewhool.bicycleAPI.repository.BicycleRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +28,6 @@ public class BicycleImageService {
 
     @Value("${filesystem.storage.folder}")
     private String filesystemStorageFolder;
-
-    private final ResourceLoader resourceLoader;
 
     private final BicycleImageRepository bicycleImageRepository;
 
@@ -72,16 +69,17 @@ public class BicycleImageService {
 
         try {
 
-            Resource resource = resourceLoader.getResource(String.format("classpath:%s", filesystemStorageFolder));
-            String externalFolderPath = resource.getFile().getAbsolutePath();
-            File file = new File(externalFolderPath + File.separator + image.getOriginalFilename());
+            Path externalPath = Path.of(filesystemStorageFolder);
 
-            OutputStream os = new FileOutputStream(file);
-            os.write(image.getBytes());
-            os.close();
+            if (!Files.exists(externalPath)) {
+                Files.createDirectories(externalPath);
+            }
+
+            Path filePath = externalPath.resolve(Objects.requireNonNull(image.getOriginalFilename()));
+            Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         } catch (IOException e) {
-            throw new BicycleImageStorageException(e.getMessage());
+            throw new RuntimeException(e.getMessage());
         }
 
     }

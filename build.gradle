@@ -11,6 +11,12 @@ java {
 	sourceCompatibility = '17'
 }
 
+jar {
+	manifest {
+		attributes 'Main-Class': 'com.bravewhool.bicycleAPI.BicycleApiApplication'
+	}
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor

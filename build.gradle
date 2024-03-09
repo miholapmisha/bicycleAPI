@@ -11,14 +11,6 @@ java {
 	sourceCompatibility = '17'
 }
 
-sourceSets {
-	main {
-		resources {
-			srcDirs = ["src/main/resources", "public"]
-		}
-	}
-}
-
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor

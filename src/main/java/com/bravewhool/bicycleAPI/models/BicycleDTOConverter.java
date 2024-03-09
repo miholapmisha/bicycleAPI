@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -19,12 +21,12 @@ public class BicycleDTOConverter {
 
         BicycleDTO bicycleDTO = modelMapper.map(entity, BicycleDTO.class);
 
-        List<String> imageUrls = entity.getImages()
+        Set<String> imageUrls = entity.getImages()
                 .stream()
                 .map(item -> ServletUriComponentsBuilder.fromCurrentContextPath()
                         .path(item.getName())
                         .toUriString())
-                .toList();
+                .collect(Collectors.toSet());
 
         bicycleDTO.setImagesUrls(imageUrls);
 

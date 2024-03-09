@@ -18,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -35,23 +34,37 @@ public class BicycleImageService {
 
     @Transactional
     public String uploadBicycleImage(MultipartFile image, Long bicycleId) {
+        try {
 
-        if (image == null || image.isEmpty() || image.getOriginalFilename() == null)
-            throw new BicycleImageStorageException("Uploaded file is empty or with missing data!");
+            if (image == null || image.isEmpty() || image.getOriginalFilename() == null)
+                throw new BicycleImageStorageException("Uploaded file is empty or with missing data!");
 
 
-        String imageName = image.getOriginalFilename();
-        String imageExtension = FilenameUtils.getExtension(imageName);
+            String imageName = image.getOriginalFilename();
+            String imageExtension = FilenameUtils.getExtension(imageName);
 
-        if (!AVAILABLE_IMAGE_EXTENSIONS.contains(imageExtension))
-            throw new BicycleImageStorageException("File with unsupported extensions: ." + imageExtension + "!");
+            if (!AVAILABLE_IMAGE_EXTENSIONS.contains(imageExtension))
+                throw new BicycleImageStorageException("File with unsupported extensions: ." + imageExtension + "!");
 
-        saveToDataBase(bicycleId, imageName);
-        writeToFileSystem(image);
+            Path externalPath = Path.of(filesystemStorageFolder);
+            if (!Files.exists(externalPath)) {
+                Files.createDirectories(externalPath);
+            }
+            Path fileToSave = Path.of(filesystemStorageFolder).resolve(image.getOriginalFilename());
+            if (fileToSave.toFile().exists())
+                throw new BicycleImageStorageException("File with such name already exist!");
 
-        return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path(imageName)
-                .toUriString();
+            saveToDataBase(bicycleId, imageName);
+
+            Files.copy(image.getInputStream(), fileToSave, StandardCopyOption.REPLACE_EXISTING);
+
+            return ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path(imageName)
+                    .toUriString();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Transactional
@@ -63,25 +76,6 @@ public class BicycleImageService {
                 .orElseThrow(() -> new BicycleNotFoundException(bicycleId)));
 
         bicycleImageRepository.save(bicycleImage);
-    }
-
-    private void writeToFileSystem(MultipartFile image) {
-
-        try {
-
-            Path externalPath = Path.of(filesystemStorageFolder);
-
-            if (!Files.exists(externalPath)) {
-                Files.createDirectories(externalPath);
-            }
-
-            Path filePath = externalPath.resolve(Objects.requireNonNull(image.getOriginalFilename()));
-            Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        } catch (IOException e) {
-            throw new RuntimeException(e.getMessage());
-        }
-
     }
 
 }

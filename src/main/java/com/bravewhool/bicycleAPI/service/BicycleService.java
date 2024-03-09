@@ -15,10 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -75,6 +72,8 @@ public class BicycleService {
         bicycle.setPrice(request.getPrice());
         bicycle.setMaterialType(request.getMaterialType());
         bicycle.setWheelSize(request.getWheelSize());
+        bicycle.setFrameType(request.getFrameType());
+        bicycle.setImages(new ArrayList<>());
     }
 
     @Transactional

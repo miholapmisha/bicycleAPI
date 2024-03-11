@@ -69,7 +69,7 @@ public class BicycleController {
         return bicycleService.getUsedBicycleColors();
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public void updateBicycle(@RequestBody @Validated BicycleUpdateRequest request, @PathVariable Long id) {
         bicycleService.updateBicycle(request, id);
     }

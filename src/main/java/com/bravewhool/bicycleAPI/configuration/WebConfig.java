@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebMvc
-public class BicycleImageStoreConfig implements WebMvcConfigurer {
+public class WebConfig implements WebMvcConfigurer {
 
     @Value("${filesystem.storage.folder}")
     private String filesystemStorageFolder;

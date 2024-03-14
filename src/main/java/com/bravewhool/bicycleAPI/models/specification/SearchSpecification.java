@@ -70,6 +70,10 @@ public class SearchSpecification<T> {
             case LIKE ->
                     (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get(criteria.getFieldName()),
                             criteria.getValue().toString());
+            case I_LIKE -> (root, query, criteriaBuilder) -> criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get(criteria.getFieldName())),
+                    "%" + criteria.getValue().toString().toLowerCase() + "%"
+            );
             case IS_TRUE ->
                     (root, query, criteriaBuilder) -> criteriaBuilder.isTrue(root.get(criteria.getFieldName()).as(Boolean.class));
             case IS_FALSE ->

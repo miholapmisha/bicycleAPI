@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/bicycle")
@@ -25,11 +26,11 @@ public class BicycleController {
     private final BicycleImageService bicycleImageService;
 
     @PostMapping("/image")
-    public ResponseEntity<String> uploadFile(@RequestParam MultipartFile image, @RequestParam Long bicycleId) {
+    public ResponseEntity<String> uploadFile(@RequestParam MultipartFile image, @RequestParam UUID bicycleId) {
         return ResponseEntity.ok(bicycleImageService.uploadBicycleImage(image, bicycleId));
     }
 
-    @PostMapping
+    @PostMapping("/save")
     public ResponseEntity<BicycleDTO> saveBicycle(@RequestBody @Validated BicycleUpdateRequest request) {
         return ResponseEntity.ok(bicycleService.saveBicycle(request));
     }
@@ -40,12 +41,12 @@ public class BicycleController {
     }
 
     @GetMapping("/all")
-    public List<BicycleDTO> searchBicyclesByIds(@RequestBody List<Long> ids) {
+    public List<BicycleDTO> searchBicyclesByIds(@RequestBody List<UUID> ids) {
         return bicycleService.findBicyclesByIds(ids);
     }
 
     @GetMapping("/{id}")
-    public BicycleDTO findBicyclesById(@PathVariable Long id) {
+    public BicycleDTO findBicyclesById(@PathVariable UUID id) {
         return bicycleService.findBicyclesById(id);
     }
 
@@ -70,12 +71,12 @@ public class BicycleController {
     }
 
     @PutMapping("/update/{id}")
-    public void updateBicycle(@RequestBody @Validated BicycleUpdateRequest request, @PathVariable Long id) {
+    public void updateBicycle(@RequestBody @Validated BicycleUpdateRequest request, @PathVariable UUID id) {
         bicycleService.updateBicycle(request, id);
     }
 
     @DeleteMapping("/delete/{id}")
-    public void deleteBicycle(@PathVariable Long id) {
+    public void deleteBicycle(@PathVariable UUID id) {
         bicycleService.deleteBicycle(id);
     }
 }

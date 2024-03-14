@@ -10,6 +10,7 @@ import com.bravewhool.bicycleAPI.models.specification.SearchOperator;
 import com.bravewhool.bicycleAPI.models.specification.SearchSpecification;
 import com.bravewhool.bicycleAPI.repository.BicycleRepository;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,8 @@ public class BicycleService {
 
     private final BicycleDTOConverter bicycleEntityConverter;
 
+    private final ModelMapper mapper;
+
     public List<BicycleDTO> getBicyclesLikeName(String name) {
         return bicycleEntityConverter.convertToDTO(bicycleRepository.findByNameContainingIgnoreCase(name));
     }
@@ -43,11 +46,12 @@ public class BicycleService {
     }
 
     @Transactional
-    public void updateBicycle(BicycleUpdateRequest request, Long id) {
+    public void updateBicycle(BicycleUpdateRequest request, UUID id) {
         Bicycle bicycle = bicycleRepository.findById(id)
                 .orElseThrow(() -> new BicycleNotFoundException(id));
 
-        assignPropertiesFromRequest(bicycle, request);
+        mapper.map(request, bicycle);
+        bicycle.setImages(new ArrayList<>());
         bicycleRepository.save(bicycle);
 
     }
@@ -57,38 +61,28 @@ public class BicycleService {
 
         Bicycle bicycle = new Bicycle();
 
-        assignPropertiesFromRequest(bicycle, request);
+
+        mapper.map(request, bicycle);
+        bicycle.setImages(new ArrayList<>());
         bicycleRepository.save(bicycle);
 
         return bicycleEntityConverter.convertToDTO(bicycle);
     }
 
-    private void assignPropertiesFromRequest(Bicycle bicycle, BicycleUpdateRequest request) {
-
-        bicycle.setBicycleType(request.getBicycleType());
-        bicycle.setName(request.getName());
-        bicycle.setColor(request.getColor());
-        bicycle.setSale(request.isSale());
-        bicycle.setPrice(request.getPrice());
-        bicycle.setMaterialType(request.getMaterialType());
-        bicycle.setWheelSize(request.getWheelSize());
-        bicycle.setFrameType(request.getFrameType());
-        bicycle.setImages(new ArrayList<>());
-    }
-
     @Transactional
-    public void deleteBicycle(Long id) {
+    public void deleteBicycle(UUID id) {
         Bicycle bicycle = bicycleRepository.findById(id)
                 .orElseThrow(() -> new BicycleNotFoundException(id));
 
         bicycleRepository.removeById(bicycle.getId());
     }
 
-    public List<BicycleDTO> findBicyclesByIds(List<Long> ids) {
+    public List<BicycleDTO> findBicyclesByIds(List<UUID> ids) {
         return ids.stream().map(this::findBicyclesById).toList();
     }
 
-    public BicycleDTO findBicyclesById(Long id) {
+    public BicycleDTO findBicyclesById(UUID id) {
+
         Bicycle bicycle = bicycleRepository.findById(id)
                 .orElseThrow(() -> new BicycleNotFoundException(id));
 
@@ -104,6 +98,8 @@ public class BicycleService {
 
             String fieldName = entry.getKey();
             switch (fieldName) {
+                case "search" -> fieldNameToCriteriaMap.put("name",
+                        List.of(new EntitySearchCriteria("name", entry.getValue(), SearchOperator.I_LIKE)));
                 case "bicycleType", "materialType", "color", "wheelSize", "frameType" -> {
 
                     List<?> values = (List<?>) entry.getValue();
@@ -118,8 +114,8 @@ public class BicycleService {
                 case "upperBoundPrice" -> fieldNameToCriteriaMap.put("lowerBoundPrice",
                         List.of(new EntitySearchCriteria("price", entry.getValue(), SearchOperator.LESS_THAN)));
                 case "sale" -> {
-                    Boolean isTrue = (Boolean) entry.getValue();
-                    if (isTrue)
+                    Boolean isThereSale = (Boolean) entry.getValue();
+                    if (isThereSale)
                         fieldNameToCriteriaMap.put("sale", List.of(new EntitySearchCriteria("sale", entry.getValue(), SearchOperator.IS_TRUE)));
                     else
                         fieldNameToCriteriaMap.put("sale", List.of(new EntitySearchCriteria("sale", entry.getValue(), SearchOperator.IS_FALSE)));

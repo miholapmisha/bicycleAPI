@@ -1,7 +1,10 @@
 package com.bravewhool.bicycleAPI.exception;
-public class BicycleNotFoundException extends RuntimeException{
 
-    public BicycleNotFoundException(Long id) {
+import java.util.UUID;
+
+public class BicycleNotFoundException extends RuntimeException {
+
+    public BicycleNotFoundException(UUID id) {
         super("Bicycle not found with id: " + id);
     }
 }

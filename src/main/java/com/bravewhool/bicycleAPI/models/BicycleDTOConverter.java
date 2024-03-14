@@ -2,10 +2,10 @@ package com.bravewhool.bicycleAPI.models;
 
 import com.bravewhool.bicycleAPI.dto.BicycleDTO;
 import com.bravewhool.bicycleAPI.entity.Bicycle;
+import com.bravewhool.bicycleAPI.entity.BicycleImage;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 import java.util.Set;
@@ -23,9 +23,7 @@ public class BicycleDTOConverter {
 
         Set<String> imageUrls = entity.getImages()
                 .stream()
-                .map(item -> ServletUriComponentsBuilder.fromCurrentContextPath()
-                        .path(item.getName())
-                        .toUriString())
+                .map(BicycleImage::getName)
                 .collect(Collectors.toSet());
 
         bicycleDTO.setImagesUrls(imageUrls);

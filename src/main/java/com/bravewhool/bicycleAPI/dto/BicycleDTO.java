@@ -11,7 +11,7 @@ import java.util.Set;
 @Data
 public class BicycleDTO {
 
-    private Integer id;
+    private String id;
 
     private String name;
 

@@ -9,13 +9,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Repository
-public interface BicycleRepository extends CrudRepository<Bicycle, Long>,
+public interface BicycleRepository extends CrudRepository<Bicycle, UUID>,
         JpaSpecificationExecutor<Bicycle>,
-        PagingAndSortingRepository<Bicycle, Long> {
+        PagingAndSortingRepository<Bicycle, UUID> {
 
-    void removeById(Long id);
+    void removeById(UUID id);
 
     List<Bicycle> findBicycleByName(String name);
 

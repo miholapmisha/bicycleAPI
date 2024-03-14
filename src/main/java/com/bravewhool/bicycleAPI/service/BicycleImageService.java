@@ -11,13 +11,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +33,7 @@ public class BicycleImageService {
     private final BicycleRepository bicycleRepository;
 
     @Transactional
-    public String uploadBicycleImage(MultipartFile image, Long bicycleId) {
+    public String uploadBicycleImage(MultipartFile image, UUID bicycleId) {
         try {
 
             if (image == null || image.isEmpty() || image.getOriginalFilename() == null)
@@ -55,20 +55,16 @@ public class BicycleImageService {
                 throw new BicycleImageStorageException("File with such name already exist!");
 
             saveToDataBase(bicycleId, imageName);
-
             Files.copy(image.getInputStream(), fileToSave, StandardCopyOption.REPLACE_EXISTING);
 
-            return ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path(imageName)
-                    .toUriString();
-
+            return imageName;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Transactional
-    public void saveToDataBase(Long bicycleId, String imageName) {
+    public void saveToDataBase(UUID bicycleId, String imageName) {
 
         BicycleImage bicycleImage = new BicycleImage();
         bicycleImage.setName(imageName);

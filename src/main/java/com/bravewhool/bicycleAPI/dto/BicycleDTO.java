@@ -29,6 +29,6 @@ public class BicycleDTO {
 
     private String color;
 
-    private Set<String> imagesUrls;
+    private Set<String> imageNames;
 
 }

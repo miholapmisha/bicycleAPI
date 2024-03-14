@@ -26,7 +26,7 @@ public class BicycleDTOConverter {
                 .map(BicycleImage::getName)
                 .collect(Collectors.toSet());
 
-        bicycleDTO.setImagesUrls(imageUrls);
+        bicycleDTO.setImageNames(imageUrls);
 
         return bicycleDTO;
 

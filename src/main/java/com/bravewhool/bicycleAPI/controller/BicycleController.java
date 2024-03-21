@@ -4,8 +4,12 @@ import com.bravewhool.bicycleAPI.dto.BicycleDTO;
 import com.bravewhool.bicycleAPI.models.BicycleUpdateRequest;
 import com.bravewhool.bicycleAPI.service.BicycleImageService;
 import com.bravewhool.bicycleAPI.service.BicycleService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -30,9 +34,15 @@ public class BicycleController {
         return ResponseEntity.ok(bicycleImageService.uploadBicycleImage(image, bicycleId));
     }
 
-    @PostMapping("/save")
-    public ResponseEntity<BicycleDTO> saveBicycle(@RequestBody @Validated BicycleUpdateRequest request) {
-        return ResponseEntity.ok(bicycleService.saveBicycle(request));
+    @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<BicycleDTO> saveBicycle(
+            @RequestPart(value = "bicycleUpdateRequest")
+            @Parameter(schema = @Schema(type = "string", format = "binary")) @Validated BicycleUpdateRequest bicycleUpdateRequest,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images)  {
+
+        return images != null && !images.isEmpty()
+                ? ResponseEntity.ok(bicycleService.saveBicycleWithImages(bicycleUpdateRequest, images))
+                : ResponseEntity.ok(bicycleService.saveBicycle(bicycleUpdateRequest));
     }
 
     @GetMapping("/page-request")

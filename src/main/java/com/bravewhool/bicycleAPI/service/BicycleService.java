@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -31,6 +32,8 @@ public class BicycleService {
 
     private final ModelMapper mapper;
 
+    private final BicycleImageService bicycleImageService;
+
     public List<BicycleDTO> getBicyclesLikeName(String name) {
         return bicycleEntityConverter.convertToDTO(bicycleRepository.findByNameContainingIgnoreCase(name));
     }
@@ -40,7 +43,6 @@ public class BicycleService {
     }
 
     public Page<BicycleDTO> getBicyclesByPageRequest(int size, int page) {
-
         return bicycleRepository.findAll(PageRequest.of(page, size))
                 .map(bicycleEntityConverter::convertToDTO);
     }
@@ -57,10 +59,21 @@ public class BicycleService {
     }
 
     @Transactional
+    public BicycleDTO saveBicycleWithImages(BicycleUpdateRequest request, List<MultipartFile> images) {
+        BicycleDTO bicycleDTO = saveBicycle(request);
+        List<String> imageNames = new ArrayList<>();
+
+        for(MultipartFile image : images) {
+            imageNames.add(bicycleImageService.uploadBicycleImage(image, UUID.fromString(bicycleDTO.getId())));
+        }
+        bicycleDTO.setImageNames(imageNames);
+
+        return bicycleDTO;
+    }
+
+    @Transactional
     public BicycleDTO saveBicycle(BicycleUpdateRequest request) {
-
         Bicycle bicycle = new Bicycle();
-
 
         mapper.map(request, bicycle);
         bicycle.setImages(new ArrayList<>());
@@ -90,9 +103,7 @@ public class BicycleService {
     }
 
     public List<BicycleDTO> findBicyclesBySearchRequest(Map<String, Object> searchRequest) {
-
         Map<String, List<EntitySearchCriteria>> fieldNameToCriteriaMap = new HashMap<>();
-
 
         for (Map.Entry<String, Object> entry : searchRequest.entrySet()) {
 

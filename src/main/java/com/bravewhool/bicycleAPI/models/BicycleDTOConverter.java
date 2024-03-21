@@ -8,7 +8,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -21,12 +20,12 @@ public class BicycleDTOConverter {
 
         BicycleDTO bicycleDTO = modelMapper.map(entity, BicycleDTO.class);
 
-        Set<String> imageUrls = entity.getImages()
+        List<String> imageNames = entity.getImages()
                 .stream()
                 .map(BicycleImage::getName)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
 
-        bicycleDTO.setImageNames(imageUrls);
+        bicycleDTO.setImageNames(imageNames);
 
         return bicycleDTO;
 

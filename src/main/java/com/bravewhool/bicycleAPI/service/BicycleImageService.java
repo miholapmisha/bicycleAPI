@@ -39,20 +39,18 @@ public class BicycleImageService {
             if (image == null || image.isEmpty() || image.getOriginalFilename() == null)
                 throw new BicycleImageStorageException("Uploaded file is empty or with missing data!");
 
-
             String imageName = image.getOriginalFilename();
             String imageExtension = FilenameUtils.getExtension(imageName);
-
             if (!AVAILABLE_IMAGE_EXTENSIONS.contains(imageExtension))
                 throw new BicycleImageStorageException("File with unsupported extensions: ." + imageExtension + "!");
 
             Path externalPath = Path.of(filesystemStorageFolder);
-            if (!Files.exists(externalPath)) {
+            if (!Files.exists(externalPath))
                 Files.createDirectories(externalPath);
-            }
+
             Path fileToSave = Path.of(filesystemStorageFolder).resolve(image.getOriginalFilename());
             if (fileToSave.toFile().exists())
-                throw new BicycleImageStorageException("File with such name already exist!");
+                throw new BicycleImageStorageException("File with such name already exist: " + imageName);
 
             saveToDataBase(bicycleId, imageName);
             Files.copy(image.getInputStream(), fileToSave, StandardCopyOption.REPLACE_EXISTING);

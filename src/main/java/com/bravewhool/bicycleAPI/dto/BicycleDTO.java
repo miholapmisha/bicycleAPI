@@ -6,7 +6,7 @@ import com.bravewhool.bicycleAPI.entity.enums.MaterialType;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Set;
+import java.util.List;
 
 @Data
 public class BicycleDTO {
@@ -29,6 +29,6 @@ public class BicycleDTO {
 
     private String color;
 
-    private Set<String> imageNames;
+    private List<String> imageNames;
 
 }

@@ -3,19 +3,22 @@ package com.bravewhool.bicycleAPI.service;
 import com.bravewhool.bicycleAPI.entity.BicycleImage;
 import com.bravewhool.bicycleAPI.exception.BicycleImageStorageException;
 import com.bravewhool.bicycleAPI.exception.BicycleNotFoundException;
+import com.bravewhool.bicycleAPI.models.Base64Image;
 import com.bravewhool.bicycleAPI.repository.BicycleImageRepository;
 import com.bravewhool.bicycleAPI.repository.BicycleRepository;
+import jakarta.xml.bind.DatatypeConverter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,33 +36,38 @@ public class BicycleImageService {
     private final BicycleRepository bicycleRepository;
 
     @Transactional
-    public String uploadBicycleImage(MultipartFile image, UUID bicycleId) {
+    public String uploadBicycleImage(Base64Image imageFile, UUID bicycleId) {
         try {
 
-            if (image == null || image.isEmpty() || image.getOriginalFilename() == null)
-                throw new BicycleImageStorageException("Uploaded file is empty or with missing data!");
+            if (imageFile == null)
+                throw new BicycleImageStorageException("Image file does not exist!");
 
-            String imageName = image.getOriginalFilename();
+            String base64Data = imageFile.getBase64Data();
+            String imageName = imageFile.getName();
             String imageExtension = FilenameUtils.getExtension(imageName);
             if (!AVAILABLE_IMAGE_EXTENSIONS.contains(imageExtension))
-                throw new BicycleImageStorageException("File with unsupported extensions: ." + imageExtension + "!");
+                throw new BicycleImageStorageException("File with unsupported extension: ." + imageExtension + "!");
 
             Path externalPath = Path.of(filesystemStorageFolder);
             if (!Files.exists(externalPath))
                 Files.createDirectories(externalPath);
 
-            Path fileToSave = Path.of(filesystemStorageFolder).resolve(image.getOriginalFilename());
-            if (fileToSave.toFile().exists())
-                throw new BicycleImageStorageException("File with such name already exist: " + imageName);
+            Path fileToSave = externalPath.resolve(imageName);
+            if (Files.exists(fileToSave))
+                throw new BicycleImageStorageException("File with such name already exists: " + imageName);
 
             saveToDataBase(bicycleId, imageName);
-            Files.copy(image.getInputStream(), fileToSave, StandardCopyOption.REPLACE_EXISTING);
+
+            try(OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(fileToSave.toFile()))) {
+                outputStream.write(DatatypeConverter.parseBase64Binary(base64Data));
+            }
 
             return imageName;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+
 
     @Transactional
     public void saveToDataBase(UUID bicycleId, String imageName) {

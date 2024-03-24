@@ -3,6 +3,7 @@ package com.bravewhool.bicycleAPI.service;
 import com.bravewhool.bicycleAPI.dto.BicycleDTO;
 import com.bravewhool.bicycleAPI.entity.Bicycle;
 import com.bravewhool.bicycleAPI.exception.BicycleNotFoundException;
+import com.bravewhool.bicycleAPI.models.Base64Image;
 import com.bravewhool.bicycleAPI.models.BicycleDTOConverter;
 import com.bravewhool.bicycleAPI.models.BicycleUpdateRequest;
 import com.bravewhool.bicycleAPI.models.specification.EntitySearchCriteria;
@@ -15,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -59,14 +59,16 @@ public class BicycleService {
     }
 
     @Transactional
-    public BicycleDTO saveBicycleWithImages(BicycleUpdateRequest request, List<MultipartFile> images) {
+    public BicycleDTO saveBicycleWithImages(BicycleUpdateRequest request) {
         BicycleDTO bicycleDTO = saveBicycle(request);
-        List<String> imageNames = new ArrayList<>();
 
-        for(MultipartFile image : images) {
-            imageNames.add(bicycleImageService.uploadBicycleImage(image, UUID.fromString(bicycleDTO.getId())));
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
+            List<String> imageNames = new ArrayList<>();
+            for (Base64Image image : request.getImages()) {
+                imageNames.add(bicycleImageService.uploadBicycleImage(image, UUID.fromString(bicycleDTO.getId())));
+            }
+            bicycleDTO.setImageNames(imageNames);
         }
-        bicycleDTO.setImageNames(imageNames);
 
         return bicycleDTO;
     }

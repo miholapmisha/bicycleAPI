@@ -1,19 +1,15 @@
 package com.bravewhool.bicycleAPI.controller;
 
 import com.bravewhool.bicycleAPI.dto.BicycleDTO;
+import com.bravewhool.bicycleAPI.models.Base64Image;
 import com.bravewhool.bicycleAPI.models.BicycleUpdateRequest;
 import com.bravewhool.bicycleAPI.service.BicycleImageService;
 import com.bravewhool.bicycleAPI.service.BicycleService;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -30,19 +26,13 @@ public class BicycleController {
     private final BicycleImageService bicycleImageService;
 
     @PostMapping("/image")
-    public ResponseEntity<String> uploadFile(@RequestParam MultipartFile image, @RequestParam UUID bicycleId) {
+    public ResponseEntity<String> uploadFile(@RequestParam Base64Image image, @RequestParam UUID bicycleId) {
         return ResponseEntity.ok(bicycleImageService.uploadBicycleImage(image, bicycleId));
     }
 
-    @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<BicycleDTO> saveBicycle(
-            @RequestPart(value = "bicycleUpdateRequest")
-            @Parameter(schema = @Schema(type = "string", format = "binary")) @Validated BicycleUpdateRequest bicycleUpdateRequest,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images)  {
-
-        return images != null && !images.isEmpty()
-                ? ResponseEntity.ok(bicycleService.saveBicycleWithImages(bicycleUpdateRequest, images))
-                : ResponseEntity.ok(bicycleService.saveBicycle(bicycleUpdateRequest));
+    @PostMapping(value = "/save")
+    public BicycleDTO saveBicycle(@RequestBody BicycleUpdateRequest bicycleUpdateRequest) {
+        return bicycleService.saveBicycleWithImages(bicycleUpdateRequest);
     }
 
     @GetMapping("/page-request")

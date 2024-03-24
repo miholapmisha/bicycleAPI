@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 
 @Data
@@ -40,5 +41,7 @@ public class BicycleUpdateRequest {
     @NotBlank(message = "Bicycle request exception - invalid color: color is empty")
     @Pattern(regexp = "^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$", message = "Bicycle request exception - invalid color pattern: must be hexadecimal")
     private String color;
+
+    private List<Base64Image> images;
 
 }

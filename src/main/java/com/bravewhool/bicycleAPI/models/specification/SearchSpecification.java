@@ -13,11 +13,9 @@ import java.util.*;
 public class SearchSpecification<T> {
 
     public Specification<T> getFinalSpecification(Map<String, List<EntitySearchCriteria>> entitiesSearchCriteria) {
-
         List<Specification<T>> finalSpecifications = new ArrayList<>();
 
         for (Map.Entry<String, List<EntitySearchCriteria>> entry : entitiesSearchCriteria.entrySet()) {
-
             List<Specification<T>> specificationsFromCriteria = entry.getValue().stream()
                     .map(this::createSpecification)
                     .toList();
@@ -25,19 +23,15 @@ public class SearchSpecification<T> {
             boolean isAllEqualSearchOperator = entry.getValue().stream().allMatch(criteria -> criteria.getSearchOperator() == SearchOperator.EQUALS);
 
             if (isAllEqualSearchOperator) {
-
                 specificationWithSameField = (root, query, criteriaBuilder) ->
                         criteriaBuilder.or(
                                 getPredicates(root, query, criteriaBuilder, specificationsFromCriteria)
                         );
-
             } else {
-
                 specificationWithSameField = (root, query, criteriaBuilder) ->
                         criteriaBuilder.and(
                                 getPredicates(root, query, criteriaBuilder, specificationsFromCriteria)
                         );
-
             }
 
             finalSpecifications.add(specificationWithSameField);
@@ -53,7 +47,6 @@ public class SearchSpecification<T> {
     }
 
     private Specification<T> createSpecification(EntitySearchCriteria criteria) {
-
         return switch (criteria.getSearchOperator()) {
             case EQUALS ->
                     (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(criteria.getFieldName()),

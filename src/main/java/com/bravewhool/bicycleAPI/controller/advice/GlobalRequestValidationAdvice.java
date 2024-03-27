@@ -20,7 +20,6 @@ public class GlobalRequestValidationAdvice {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public Map<String, List<String>> handleValidationErrors(MethodArgumentNotValidException exception) {
-
         List<String> errors = exception.getBindingResult().getFieldErrors().stream()
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.toList());

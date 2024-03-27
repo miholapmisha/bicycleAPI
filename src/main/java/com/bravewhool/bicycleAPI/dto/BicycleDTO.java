@@ -7,11 +7,12 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class BicycleDTO {
 
-    private String id;
+    private UUID id;
 
     private String name;
 
@@ -29,6 +30,18 @@ public class BicycleDTO {
 
     private String color;
 
-    private List<String> imageNames;
+    private String description;
+
+    private BigDecimal weight;
+
+    private Integer guarantee;
+
+    private String brakeType;
+
+    private String brand;
+
+    private Long quantity;
+
+    private List<String> imagesUrls;
 
 }

@@ -1,83 +1,127 @@
 package com.bravewhool.bicycleAPI.service;
 
+import com.bravewhool.bicycleAPI.entity.Bicycle;
 import com.bravewhool.bicycleAPI.entity.BicycleImage;
+import com.bravewhool.bicycleAPI.exception.BicycleImageNotFoundException;
 import com.bravewhool.bicycleAPI.exception.BicycleImageStorageException;
 import com.bravewhool.bicycleAPI.exception.BicycleNotFoundException;
-import com.bravewhool.bicycleAPI.models.Base64Image;
 import com.bravewhool.bicycleAPI.repository.BicycleImageRepository;
 import com.bravewhool.bicycleAPI.repository.BicycleRepository;
-import jakarta.xml.bind.DatatypeConverter;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.io.FilenameUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BicycleImageService {
-
-    private static final List<String> AVAILABLE_IMAGE_EXTENSIONS = List.of("jpg", "jpeg", "png", "gif", "bmp");
-
-    @Value("${filesystem.storage.folder}")
-    private String filesystemStorageFolder;
 
     private final BicycleImageRepository bicycleImageRepository;
 
     private final BicycleRepository bicycleRepository;
 
+    private final Cloudinary cloudinary;
+
     @Transactional
-    public String uploadBicycleImage(Base64Image imageFile, UUID bicycleId) {
+    public List<String> uploadBicycleImages(List<String> base64Images, UUID bicycleId) {
+        Bicycle bicycle = bicycleRepository.findById(bicycleId)
+                .orElseThrow(() -> new BicycleNotFoundException(bicycleId));
+
+        return base64Images.stream()
+                .map(base64Image -> uploadBicycleImage(base64Image, bicycle))
+                .toList();
+    }
+
+    @Transactional
+    public String uploadBicycleImage(String base64Image, Bicycle bicycle) {
+
         try {
+            if (base64Image == null)
+                throw new BicycleImageStorageException("Image data does not exist!");
 
-            if (imageFile == null)
-                throw new BicycleImageStorageException("Image file does not exist!");
+            byte[] decodedBytes = Base64.getDecoder().decode(base64Image);
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(decodedBytes));
+            if (image == null)
+                throw new BicycleImageStorageException("Failed to convert data into string");
 
-            String base64Data = imageFile.getBase64Data();
-            String imageName = imageFile.getName();
-            String imageExtension = FilenameUtils.getExtension(imageName);
-            if (!AVAILABLE_IMAGE_EXTENSIONS.contains(imageExtension))
-                throw new BicycleImageStorageException("File with unsupported extension: ." + imageExtension + "!");
+            var uploadResult = cloudinary.uploader().upload(decodedBytes, ObjectUtils.emptyMap());
+            String url = (String) uploadResult.get("url");
+            String publicId = (String) uploadResult.get("public_id");
+            saveToDataBase(bicycle, url, publicId);
 
-            Path externalPath = Path.of(filesystemStorageFolder);
-            if (!Files.exists(externalPath))
-                Files.createDirectories(externalPath);
-
-            Path fileToSave = externalPath.resolve(imageName);
-            if (Files.exists(fileToSave))
-                throw new BicycleImageStorageException("File with such name already exists: " + imageName);
-
-            saveToDataBase(bicycleId, imageName);
-
-            try(OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(fileToSave.toFile()))) {
-                outputStream.write(DatatypeConverter.parseBase64Binary(base64Data));
-            }
-
-            return imageName;
-        } catch (IOException e) {
+            return url;
+        } catch (IOException | IllegalArgumentException e) {
+            throw new BicycleImageStorageException(e.getMessage());
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
 
     @Transactional
-    public void saveToDataBase(UUID bicycleId, String imageName) {
-
+    public void saveToDataBase(Bicycle bicycle, String imageUrl, String publicId) {
         BicycleImage bicycleImage = new BicycleImage();
-        bicycleImage.setName(imageName);
-        bicycleImage.setBicycle(bicycleRepository.findById(bicycleId)
-                .orElseThrow(() -> new BicycleNotFoundException(bicycleId)));
+        bicycleImage.setId(publicId);
+        bicycleImage.setUrl(imageUrl);
+        bicycleImage.setBicycle(bicycle);
 
         bicycleImageRepository.save(bicycleImage);
+    }
+
+    @Transactional
+    public void removeImageByUrl(String url) {
+
+        try {
+            BicycleImage bicycleImage = bicycleImageRepository.getBicycleImageByUrl(url)
+                    .orElseThrow(() -> new BicycleImageNotFoundException("url: " + url));
+            String publicId = bicycleImage.getId();
+            cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+            bicycleImageRepository.removeByUrl(url);
+        } catch (IOException | IllegalArgumentException e) {
+            throw new BicycleImageStorageException(e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    @Transactional
+    public void removeImagesByBicycleId(UUID bicycleId) {
+        Bicycle bicycle = bicycleRepository.findById(bicycleId)
+                .orElseThrow(() -> new BicycleNotFoundException(bicycleId));
+        removeImagesFromStorageByBicycleId(bicycle.getId());
+        bicycleImageRepository.removeByBicycleId(bicycle.getId());
+    }
+
+    public void removeImagesFromStorageByBicycleId(UUID bicycleId) {
+
+        try {
+            List<BicycleImage> bicycleImages = bicycleImageRepository.getBicycleImagesByBicycleId(bicycleId);
+            if (bicycleImages == null)
+                throw new BicycleImageNotFoundException("bicycle id:" + bicycleId);
+            for (BicycleImage bicycleImage : bicycleImages) {
+                cloudinary.uploader().destroy(bicycleImage.getId(), ObjectUtils.emptyMap());
+            }
+        } catch (IOException | IllegalArgumentException e) {
+            throw new BicycleImageStorageException(e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public List<String> getUrlsByBicycleId(UUID bicycleId) {
+        return bicycleImageRepository.getImageUrlsByBicycleId(bicycleId);
     }
 
 }

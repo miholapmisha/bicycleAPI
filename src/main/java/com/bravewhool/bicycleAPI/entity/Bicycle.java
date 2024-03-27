@@ -23,7 +23,6 @@ public class Bicycle {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name="name")
     private String name;
 
     @Column(name = "type")
@@ -38,19 +37,28 @@ public class Bicycle {
     @Enumerated(EnumType.STRING)
     private BicycleFrameType frameType;
 
-    @Column(name = "sale")
     private boolean sale;
 
-    @Column(name = "price")
     private BigDecimal price;
 
     @Column(name = "wheel_size")
     private BigDecimal wheelSize;
 
-    @Column(name = "color")
     private String color;
 
-    @OneToMany
-    @JoinColumn(name = "bicycle_id")
+    private String description;
+
+    private String brand;
+
+    @Column(name = "brake_type")
+    private String brakeType;
+
+    private BigDecimal weight;
+
+    private Integer guarantee;
+
+    private Long quantity;
+
+    @OneToMany(mappedBy = "bicycle")
     private List<BicycleImage> images;
 }

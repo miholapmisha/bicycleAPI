@@ -4,21 +4,26 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.domain.Persistable;
 
 @Entity
 @Table(name = "bicycle_images")
 @NoArgsConstructor
 @Getter
 @Setter
-public class BicycleImage {
+public class BicycleImage implements Persistable<String> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(name = "name")
-    private String name;
+    @Column
+    private String url;
 
     @ManyToOne
     private Bicycle bicycle;
+
+    @Override
+    public boolean isNew() {
+        return true;
+    }
 }

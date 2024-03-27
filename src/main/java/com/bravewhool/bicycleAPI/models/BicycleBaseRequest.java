@@ -11,11 +11,10 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 
 @Data
-public class BicycleUpdateRequest {
+public class BicycleBaseRequest {
 
     @NotBlank(message = "Bicycle request exception - invalid name: name is empty")
     private String name;
@@ -29,10 +28,8 @@ public class BicycleUpdateRequest {
     @NotNull(message = "Bicycle request exception - invalid bicycle frame type: null")
     private BicycleFrameType frameType;
 
-    private boolean sale;
-
     @NotNull(message = "Bicycle request exception - invalid price: price is null")
-    @Min(value = 0, message = "Bicycle request exception - invalid price: must be greater than 0")
+    @Min(value = 0, message = "Bicycle request exception - invalid price: must be greater or equal to 0")
     private BigDecimal price;
 
     @NotNull(message = "Bicycle request exception - invalid wheel size: size is null")
@@ -42,6 +39,27 @@ public class BicycleUpdateRequest {
     @Pattern(regexp = "^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$", message = "Bicycle request exception - invalid color pattern: must be hexadecimal")
     private String color;
 
-    private List<Base64Image> images;
+    @NotNull(message = "Bicycle request exception - invalid description: description is null")
+    private String description;
+
+    @NotNull(message = "Bicycle request exception - invalid brand: brand is null")
+    private String brand;
+
+    @NotNull(message = "Bicycle request exception - invalid brake type: brake type is null")
+    private String brakeType;
+
+    @NotNull(message = "Bicycle request exception - invalid wheel weight: weight is null")
+    @Min(value = 0, message = "Bicycle request exception - invalid weight: must be greater or equal to 0")
+    private BigDecimal weight;
+
+    @NotNull(message = "Bicycle request exception - invalid guarantee value: guarantee value is null")
+    @Min(value = 0, message = "Bicycle request exception - invalid guarantee value: must be greater or equal to 0")
+    private Integer guarantee;
+
+    @NotNull(message = "Bicycle request exception - invalid quantity value: quantity value is null")
+    @Min(value = 0, message = "Bicycle request exception - invalid quantity value: must be greater or equal to 0")
+    private Long quantity;
+
+    private boolean sale;
 
 }

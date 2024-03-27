@@ -17,15 +17,14 @@ public class BicycleDTOConverter {
     private final ModelMapper modelMapper;
 
     public BicycleDTO convertToDTO(Bicycle entity) {
-
         BicycleDTO bicycleDTO = modelMapper.map(entity, BicycleDTO.class);
 
-        List<String> imageNames = entity.getImages()
+        List<String> imageUrls = entity.getImages()
                 .stream()
-                .map(BicycleImage::getName)
+                .map(BicycleImage::getUrl)
                 .collect(Collectors.toList());
 
-        bicycleDTO.setImageNames(imageNames);
+        bicycleDTO.setImagesUrls(imageUrls);
 
         return bicycleDTO;
 

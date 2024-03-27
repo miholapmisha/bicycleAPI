@@ -3,9 +3,9 @@ package com.bravewhool.bicycleAPI.service;
 import com.bravewhool.bicycleAPI.dto.BicycleDTO;
 import com.bravewhool.bicycleAPI.entity.Bicycle;
 import com.bravewhool.bicycleAPI.exception.BicycleNotFoundException;
-import com.bravewhool.bicycleAPI.models.Base64Image;
+import com.bravewhool.bicycleAPI.models.BicycleBaseImageRequest;
+import com.bravewhool.bicycleAPI.models.BicycleBaseRequest;
 import com.bravewhool.bicycleAPI.models.BicycleDTOConverter;
-import com.bravewhool.bicycleAPI.models.BicycleUpdateRequest;
 import com.bravewhool.bicycleAPI.models.specification.EntitySearchCriteria;
 import com.bravewhool.bicycleAPI.models.specification.SearchOperator;
 import com.bravewhool.bicycleAPI.models.specification.SearchSpecification;
@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.MultiValueMap;
 
 import java.util.*;
 
@@ -48,33 +49,34 @@ public class BicycleService {
     }
 
     @Transactional
-    public void updateBicycle(BicycleUpdateRequest request, UUID id) {
+    public BicycleDTO updateBicycle(BicycleBaseRequest request, UUID id) {
         Bicycle bicycle = bicycleRepository.findById(id)
                 .orElseThrow(() -> new BicycleNotFoundException(id));
-
         mapper.map(request, bicycle);
-        bicycle.setImages(new ArrayList<>());
-        bicycleRepository.save(bicycle);
 
+        return bicycleEntityConverter.convertToDTO(bicycle);
     }
 
     @Transactional
-    public BicycleDTO saveBicycleWithImages(BicycleUpdateRequest request) {
+    public BicycleDTO saveBicycleWithImages(BicycleBaseImageRequest request) {
         BicycleDTO bicycleDTO = saveBicycle(request);
 
         if (request.getImages() != null && !request.getImages().isEmpty()) {
-            List<String> imageNames = new ArrayList<>();
-            for (Base64Image image : request.getImages()) {
-                imageNames.add(bicycleImageService.uploadBicycleImage(image, UUID.fromString(bicycleDTO.getId())));
+            Bicycle bicycle = bicycleRepository.findById(bicycleDTO.getId())
+                    .orElseThrow(() -> new BicycleNotFoundException(bicycleDTO.getId()));
+
+            List<String> imagesUrls = new ArrayList<>();
+            for (String image : request.getImages()) {
+                imagesUrls.add(bicycleImageService.uploadBicycleImage(image, bicycle));
             }
-            bicycleDTO.setImageNames(imageNames);
+            bicycleDTO.setImagesUrls(imagesUrls);
         }
 
         return bicycleDTO;
     }
 
     @Transactional
-    public BicycleDTO saveBicycle(BicycleUpdateRequest request) {
+    public BicycleDTO saveBicycle(BicycleBaseRequest request) {
         Bicycle bicycle = new Bicycle();
 
         mapper.map(request, bicycle);
@@ -88,7 +90,7 @@ public class BicycleService {
     public void deleteBicycle(UUID id) {
         Bicycle bicycle = bicycleRepository.findById(id)
                 .orElseThrow(() -> new BicycleNotFoundException(id));
-
+        bicycleImageService.removeImagesByBicycleId(id);
         bicycleRepository.removeById(bicycle.getId());
     }
 
@@ -97,37 +99,32 @@ public class BicycleService {
     }
 
     public BicycleDTO findBicyclesById(UUID id) {
-
         Bicycle bicycle = bicycleRepository.findById(id)
                 .orElseThrow(() -> new BicycleNotFoundException(id));
 
         return bicycleEntityConverter.convertToDTO(bicycle);
     }
 
-    public List<BicycleDTO> findBicyclesBySearchRequest(Map<String, Object> searchRequest) {
+    public List<BicycleDTO> findBicyclesBySearchRequest(MultiValueMap<String, String> searchRequest) {
         Map<String, List<EntitySearchCriteria>> fieldNameToCriteriaMap = new HashMap<>();
 
-        for (Map.Entry<String, Object> entry : searchRequest.entrySet()) {
-
+        for (Map.Entry<String, List<String>> entry : searchRequest.entrySet()) {
             String fieldName = entry.getKey();
+            List<String> values = entry.getValue();
             switch (fieldName) {
                 case "search" -> fieldNameToCriteriaMap.put("name",
-                        List.of(new EntitySearchCriteria("name", entry.getValue(), SearchOperator.I_LIKE)));
-                case "bicycleType", "materialType", "color", "wheelSize", "frameType" -> {
-
-                    List<?> values = (List<?>) entry.getValue();
-
-                    fieldNameToCriteriaMap.put(fieldName, values.stream()
-                            .map(item -> new EntitySearchCriteria(fieldName, item.toString().toUpperCase(), SearchOperator.EQUALS))
-                            .toList());
-
-                }
+                        List.of(new EntitySearchCriteria("name", values.get(0), SearchOperator.I_LIKE)));
+                case "bicycleType", "materialType", "color", "wheelSize", "frameType" ->
+                        fieldNameToCriteriaMap.put(fieldName, values.stream()
+                                .map(item -> new EntitySearchCriteria(fieldName, item.toUpperCase(), SearchOperator.EQUALS))
+                                .toList());
                 case "lowerBoundPrice" -> fieldNameToCriteriaMap.put("lowerBoundPrice",
-                        List.of(new EntitySearchCriteria("price", entry.getValue(), SearchOperator.GREATER_THAN)));
+                        List.of(new EntitySearchCriteria("price", values, SearchOperator.GREATER_THAN)));
                 case "upperBoundPrice" -> fieldNameToCriteriaMap.put("lowerBoundPrice",
-                        List.of(new EntitySearchCriteria("price", entry.getValue(), SearchOperator.LESS_THAN)));
+                        List.of(new EntitySearchCriteria("price", values, SearchOperator.LESS_THAN)));
                 case "sale" -> {
-                    Boolean isThereSale = (Boolean) entry.getValue();
+
+                    boolean isThereSale = Boolean.parseBoolean(values.get(0));
                     if (isThereSale)
                         fieldNameToCriteriaMap.put("sale", List.of(new EntitySearchCriteria("sale", entry.getValue(), SearchOperator.IS_TRUE)));
                     else

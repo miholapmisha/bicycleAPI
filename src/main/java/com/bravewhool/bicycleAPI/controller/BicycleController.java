@@ -1,18 +1,16 @@
 package com.bravewhool.bicycleAPI.controller;
 
 import com.bravewhool.bicycleAPI.dto.BicycleDTO;
-import com.bravewhool.bicycleAPI.models.Base64Image;
-import com.bravewhool.bicycleAPI.models.BicycleUpdateRequest;
-import com.bravewhool.bicycleAPI.service.BicycleImageService;
+import com.bravewhool.bicycleAPI.models.BicycleBaseImageRequest;
+import com.bravewhool.bicycleAPI.models.BicycleBaseRequest;
 import com.bravewhool.bicycleAPI.service.BicycleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -23,16 +21,9 @@ public class BicycleController {
 
     private final BicycleService bicycleService;
 
-    private final BicycleImageService bicycleImageService;
-
-    @PostMapping("/image")
-    public ResponseEntity<String> uploadFile(@RequestParam Base64Image image, @RequestParam UUID bicycleId) {
-        return ResponseEntity.ok(bicycleImageService.uploadBicycleImage(image, bicycleId));
-    }
-
     @PostMapping(value = "/save")
-    public BicycleDTO saveBicycle(@RequestBody BicycleUpdateRequest bicycleUpdateRequest) {
-        return bicycleService.saveBicycleWithImages(bicycleUpdateRequest);
+    public BicycleDTO saveBicycle(@RequestBody BicycleBaseImageRequest bicycleBaseRequest) {
+        return bicycleService.saveBicycleWithImages(bicycleBaseRequest);
     }
 
     @GetMapping("/page-request")
@@ -40,8 +31,8 @@ public class BicycleController {
         return bicycleService.getBicyclesByPageRequest(size, page);
     }
 
-    @GetMapping("/all")
-    public List<BicycleDTO> searchBicyclesByIds(@RequestBody List<UUID> ids) {
+    @GetMapping(value = "/all")
+    public List<BicycleDTO> findBicyclesByIds(@RequestParam List<UUID> ids) {
         return bicycleService.findBicyclesByIds(ids);
     }
 
@@ -51,7 +42,7 @@ public class BicycleController {
     }
 
     @GetMapping("/filter")
-    public List<BicycleDTO> searchBicyclesByFilters(@RequestBody Map<String, Object> searchRequest) {
+    public List<BicycleDTO> searchBicyclesByFilters(@RequestParam MultiValueMap<String, String> searchRequest) {
         return bicycleService.findBicyclesBySearchRequest(searchRequest);
     }
 
@@ -71,8 +62,8 @@ public class BicycleController {
     }
 
     @PutMapping("/update/{id}")
-    public void updateBicycle(@RequestBody @Validated BicycleUpdateRequest request, @PathVariable UUID id) {
-        bicycleService.updateBicycle(request, id);
+    public BicycleDTO updateBicycle(@RequestBody @Validated BicycleBaseRequest request, @PathVariable UUID id) {
+        return bicycleService.updateBicycle(request, id);
     }
 
     @DeleteMapping("/delete/{id}")

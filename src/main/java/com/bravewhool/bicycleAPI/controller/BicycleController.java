@@ -22,7 +22,7 @@ public class BicycleController {
     private final BicycleService bicycleService;
 
     @PostMapping(value = "/save")
-    public BicycleDTO saveBicycle(@RequestBody BicycleBaseImageRequest bicycleBaseRequest) {
+    public BicycleDTO saveBicycle(@RequestBody @Validated BicycleBaseImageRequest bicycleBaseRequest) {
         return bicycleService.saveBicycleWithImages(bicycleBaseRequest);
     }
 

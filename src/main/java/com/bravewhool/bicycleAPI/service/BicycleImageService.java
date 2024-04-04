@@ -52,7 +52,7 @@ public class BicycleImageService {
             byte[] decodedBytes = Base64.getDecoder().decode(base64Image);
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(decodedBytes));
             if (image == null)
-                throw new BicycleImageStorageException("Failed to convert data into string");
+                throw new BicycleImageStorageException("Failed to convert data into image!");
 
             var uploadResult = cloudinary.uploader().upload(decodedBytes, ObjectUtils.emptyMap());
             String url = (String) uploadResult.get("url");

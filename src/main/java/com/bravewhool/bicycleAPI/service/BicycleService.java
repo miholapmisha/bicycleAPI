@@ -69,7 +69,7 @@ public class BicycleService {
             for (String image : request.getImages()) {
                 imagesUrls.add(bicycleImageService.uploadBicycleImage(image, bicycle));
             }
-            bicycleDTO.setImagesUrls(imagesUrls);
+            bicycleDTO.setImages(imagesUrls);
         }
 
         return bicycleDTO;

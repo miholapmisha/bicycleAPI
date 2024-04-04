@@ -19,12 +19,12 @@ public class BicycleDTOConverter {
     public BicycleDTO convertToDTO(Bicycle entity) {
         BicycleDTO bicycleDTO = modelMapper.map(entity, BicycleDTO.class);
 
-        List<String> imageUrls = entity.getImages()
+        List<String> images = entity.getImages()
                 .stream()
                 .map(BicycleImage::getUrl)
                 .collect(Collectors.toList());
 
-        bicycleDTO.setImagesUrls(imageUrls);
+        bicycleDTO.setImages(images);
 
         return bicycleDTO;
 

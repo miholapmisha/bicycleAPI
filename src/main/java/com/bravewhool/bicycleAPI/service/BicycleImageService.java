@@ -13,9 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
@@ -50,20 +47,17 @@ public class BicycleImageService {
                 throw new BicycleImageStorageException("Image data does not exist!");
 
             byte[] decodedBytes = Base64.getDecoder().decode(base64Image);
-            BufferedImage image = ImageIO.read(new ByteArrayInputStream(decodedBytes));
-            if (image == null)
-                throw new BicycleImageStorageException("Failed to convert data into image!");
-
             var uploadResult = cloudinary.uploader().upload(decodedBytes, ObjectUtils.emptyMap());
             String url = (String) uploadResult.get("url");
             String publicId = (String) uploadResult.get("public_id");
             saveToDataBase(bicycle, url, publicId);
 
             return url;
-        } catch (IOException | IllegalArgumentException e) {
-            throw new BicycleImageStorageException(e.getMessage());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            if (e.getMessage().equals("Invalid image file"))
+                throw new BicycleImageStorageException("Failed to convert data into image!");
+            else
+                throw new RuntimeException(e);
         }
     }
 

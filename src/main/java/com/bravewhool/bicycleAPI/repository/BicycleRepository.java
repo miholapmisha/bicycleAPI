@@ -24,4 +24,7 @@ public interface BicycleRepository extends CrudRepository<Bicycle, UUID>,
 
     @Query("SELECT DISTINCT b.color FROM Bicycle b")
     Set<String> getUniqueColors();
+
+    List<Bicycle> getBicyclesByIdIsIn(List<UUID> ids);
+
 }

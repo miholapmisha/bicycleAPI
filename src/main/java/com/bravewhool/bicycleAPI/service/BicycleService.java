@@ -95,7 +95,7 @@ public class BicycleService {
     }
 
     public List<BicycleDTO> findBicyclesByIds(List<UUID> ids) {
-        return ids.stream().map(this::findBicyclesById).toList();
+        return bicycleEntityConverter.convertToDTO(bicycleRepository.getBicyclesByIdIsIn(ids));
     }
 
     public BicycleDTO findBicyclesById(UUID id) {

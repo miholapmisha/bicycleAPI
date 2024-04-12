@@ -43,5 +43,4 @@ public class BicycleDTO {
     private Long quantity;
 
     private List<String> images;
-
 }

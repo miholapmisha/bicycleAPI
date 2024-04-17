@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 @Service
@@ -106,34 +107,41 @@ public class BicycleService {
     }
 
     public List<BicycleDTO> findBicyclesBySearchRequest(MultiValueMap<String, String> searchRequest) {
-        Map<String, List<EntitySearchCriteria>> fieldNameToCriteriaMap = new HashMap<>();
+        Map<String, List<EntitySearchCriteria>> fieldNameToCriteriesMap = new HashMap<>();
 
         for (Map.Entry<String, List<String>> entry : searchRequest.entrySet()) {
             String fieldName = entry.getKey();
             List<String> values = entry.getValue();
             switch (fieldName) {
-                case "search" -> fieldNameToCriteriaMap.put("name",
+                case "search" -> fieldNameToCriteriesMap.put("name",
+
                         List.of(new EntitySearchCriteria("name", values.get(0), SearchOperator.I_LIKE)));
                 case "bicycleType", "materialType", "color", "wheelSize", "frameType" ->
-                        fieldNameToCriteriaMap.put(fieldName, values.stream()
+                        fieldNameToCriteriesMap.put(fieldName, values.stream()
                                 .map(item -> new EntitySearchCriteria(fieldName, item.toUpperCase(), SearchOperator.EQUALS))
                                 .toList());
-                case "lowerBoundPrice" -> fieldNameToCriteriaMap.put("lowerBoundPrice",
-                        List.of(new EntitySearchCriteria("price", values, SearchOperator.GREATER_THAN)));
-                case "upperBoundPrice" -> fieldNameToCriteriaMap.put("lowerBoundPrice",
-                        List.of(new EntitySearchCriteria("price", values, SearchOperator.LESS_THAN)));
+                case "lowerBoundPrice" -> fieldNameToCriteriesMap.put(fieldName,
+
+                        List.of(new EntitySearchCriteria("price",
+                                new BigDecimal(values.get(0)), SearchOperator.GREATER_THAN)));
+                case "upperBoundPrice" -> fieldNameToCriteriesMap.put(fieldName,
+
+                        List.of(new EntitySearchCriteria("price",
+                                new BigDecimal(values.get(0)), SearchOperator.LESS_THAN)));
                 case "sale" -> {
 
                     boolean isThereSale = Boolean.parseBoolean(values.get(0));
                     if (isThereSale)
-                        fieldNameToCriteriaMap.put("sale", List.of(new EntitySearchCriteria("sale", entry.getValue(), SearchOperator.IS_TRUE)));
+                        fieldNameToCriteriesMap.put(fieldName,
+                                List.of(new EntitySearchCriteria("sale", entry.getValue(), SearchOperator.IS_TRUE)));
                     else
-                        fieldNameToCriteriaMap.put("sale", List.of(new EntitySearchCriteria("sale", entry.getValue(), SearchOperator.IS_FALSE)));
+                        fieldNameToCriteriesMap.put(fieldName,
+                                List.of(new EntitySearchCriteria("sale", entry.getValue(), SearchOperator.IS_FALSE)));
                 }
             }
         }
 
-        List<Bicycle> searchBicycles = bicycleRepository.findAll(searchSpecification.getFinalSpecification(fieldNameToCriteriaMap));
+        List<Bicycle> searchBicycles = bicycleRepository.findAll(searchSpecification.getFinalSpecification(fieldNameToCriteriesMap));
 
         return bicycleEntityConverter.convertToDTO(searchBicycles);
     }

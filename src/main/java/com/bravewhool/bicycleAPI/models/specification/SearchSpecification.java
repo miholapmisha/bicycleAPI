@@ -7,6 +7,7 @@ import jakarta.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 @Component
@@ -20,7 +21,8 @@ public class SearchSpecification<T> {
                     .map(this::createSpecification)
                     .toList();
             Specification<T> specificationWithSameField;
-            boolean isAllEqualSearchOperator = entry.getValue().stream().allMatch(criteria -> criteria.getSearchOperator() == SearchOperator.EQUALS);
+            boolean isAllEqualSearchOperator = entry.getValue().stream()
+                    .allMatch(criteria -> criteria.getSearchOperator() == SearchOperator.EQUALS);
 
             if (isAllEqualSearchOperator) {
                 specificationWithSameField = (root, query, criteriaBuilder) ->
@@ -40,7 +42,10 @@ public class SearchSpecification<T> {
         return Specification.allOf(finalSpecifications);
     }
 
-    private Predicate[] getPredicates(Root<T> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder, List<Specification<T>> specifications) {
+    private Predicate[] getPredicates(Root<T> root, CriteriaQuery<?> query,
+                                      CriteriaBuilder criteriaBuilder,
+                                      List<Specification<T>> specifications) {
+
         return specifications.stream()
                 .map(s -> s.toPredicate(root, query, criteriaBuilder))
                 .toArray(Predicate[]::new);
@@ -56,10 +61,10 @@ public class SearchSpecification<T> {
                             criteria.getValue().toString());
             case GREATER_THAN ->
                     (root, query, criteriaBuilder) -> criteriaBuilder.greaterThanOrEqualTo(root.get(criteria.getFieldName()),
-                            criteria.getValue().toString());
+                            (BigDecimal) criteria.getValue());
             case LESS_THAN ->
                     (root, query, criteriaBuilder) -> criteriaBuilder.lessThanOrEqualTo(root.get(criteria.getFieldName()),
-                            criteria.getValue().toString());
+                            (BigDecimal) criteria.getValue());
             case LIKE ->
                     (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get(criteria.getFieldName()),
                             criteria.getValue().toString());

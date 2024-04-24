@@ -67,7 +67,7 @@ public class SearchSpecification<T> {
                             (BigDecimal) criteria.getValue());
             case LIKE ->
                     (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get(criteria.getFieldName()),
-                            criteria.getValue().toString());
+                            criteria.getValue().toString().toLowerCase());
             case I_LIKE -> (root, query, criteriaBuilder) -> criteriaBuilder.like(
                     criteriaBuilder.lower(root.get(criteria.getFieldName())),
                     "%" + criteria.getValue().toString().toLowerCase() + "%"

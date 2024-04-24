@@ -10,6 +10,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -59,6 +60,16 @@ public class BicycleController {
     @GetMapping("/colors")
     public Set<String> getBicyclesColors() {
         return bicycleService.getUsedBicycleColors();
+    }
+
+    @GetMapping("/minPrice")
+    public BigDecimal getMinPrice() {
+        return bicycleService.getMinBicyclePrice();
+    }
+
+    @GetMapping("/maxPrice")
+    public BigDecimal getMaxPrice() {
+        return bicycleService.getMaxBicyclePrice();
     }
 
     @PutMapping("/update/{id}")

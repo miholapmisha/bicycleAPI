@@ -60,6 +60,7 @@ public class BicycleService {
 
     @Transactional
     public BicycleDTO saveBicycleWithImages(BicycleBaseImageRequest request) {
+        request.setColor(request.getColor().toLowerCase());
         BicycleDTO bicycleDTO = saveBicycle(request);
 
         if (request.getImages() != null && !request.getImages().isEmpty()) {
@@ -110,32 +111,33 @@ public class BicycleService {
         Map<String, List<EntitySearchCriteria>> fieldNameToCriteriesMap = new HashMap<>();
 
         for (Map.Entry<String, List<String>> entry : searchRequest.entrySet()) {
-            String fieldName = entry.getKey();
+            String searchParameter = entry.getKey();
             List<String> values = entry.getValue();
-            switch (fieldName) {
+            switch (searchParameter) {
                 case "search" -> fieldNameToCriteriesMap.put("name",
-
                         List.of(new EntitySearchCriteria("name", values.get(0), SearchOperator.I_LIKE)));
-                case "bicycleType", "materialType", "color", "wheelSize", "frameType" ->
-                        fieldNameToCriteriesMap.put(fieldName, values.stream()
-                                .map(item -> new EntitySearchCriteria(fieldName, item.toUpperCase(), SearchOperator.EQUALS))
+                case "bicycleType", "materialType", "wheelSize", "frameType" ->
+                        fieldNameToCriteriesMap.put(searchParameter, values.stream()
+                                .map(item -> new EntitySearchCriteria(searchParameter, item.toUpperCase(), SearchOperator.EQUALS))
                                 .toList());
-                case "lowerBoundPrice" -> fieldNameToCriteriesMap.put(fieldName,
-
+                case "lowerBoundPrice" -> fieldNameToCriteriesMap.put(searchParameter,
                         List.of(new EntitySearchCriteria("price",
                                 new BigDecimal(values.get(0)), SearchOperator.GREATER_THAN)));
-                case "upperBoundPrice" -> fieldNameToCriteriesMap.put(fieldName,
+                case "upperBoundPrice" -> fieldNameToCriteriesMap.put(searchParameter,
 
                         List.of(new EntitySearchCriteria("price",
                                 new BigDecimal(values.get(0)), SearchOperator.LESS_THAN)));
+                case "color" -> fieldNameToCriteriesMap.put(searchParameter, values.stream()
+                        .map(item -> new EntitySearchCriteria(searchParameter, item.toLowerCase(), SearchOperator.EQUALS))
+                        .toList());
                 case "sale" -> {
 
                     boolean isThereSale = Boolean.parseBoolean(values.get(0));
                     if (isThereSale)
-                        fieldNameToCriteriesMap.put(fieldName,
+                        fieldNameToCriteriesMap.put(searchParameter,
                                 List.of(new EntitySearchCriteria("sale", entry.getValue(), SearchOperator.IS_TRUE)));
                     else
-                        fieldNameToCriteriesMap.put(fieldName,
+                        fieldNameToCriteriesMap.put(searchParameter,
                                 List.of(new EntitySearchCriteria("sale", entry.getValue(), SearchOperator.IS_FALSE)));
                 }
             }
@@ -148,6 +150,14 @@ public class BicycleService {
 
     public Set<String> getUsedBicycleColors() {
         return bicycleRepository.getUniqueColors();
+    }
+
+    public BigDecimal getMinBicyclePrice() {
+        return bicycleRepository.getMinBicyclePrice();
+    }
+
+    public BigDecimal getMaxBicyclePrice() {
+        return bicycleRepository.getMaxBicyclePrice();
     }
 
 }

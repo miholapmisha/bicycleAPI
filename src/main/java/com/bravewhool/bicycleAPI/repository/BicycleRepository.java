@@ -33,4 +33,7 @@ public interface BicycleRepository extends CrudRepository<Bicycle, UUID>,
 
     @Query("SELECT MAX(b.price) FROM Bicycle b")
     BigDecimal getMaxBicyclePrice();
+
+    @Query("SELECT COUNT(*) FROM Bicycle b")
+    Long getNumberOfBicycles();
 }

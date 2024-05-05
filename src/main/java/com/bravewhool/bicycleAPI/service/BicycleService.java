@@ -160,4 +160,8 @@ public class BicycleService {
         return bicycleRepository.getMaxBicyclePrice();
     }
 
+    public Long getNumberOfBicycles() {
+        return bicycleRepository.getNumberOfBicycles();
+    }
+
 }

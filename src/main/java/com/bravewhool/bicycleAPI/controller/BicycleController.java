@@ -72,6 +72,11 @@ public class BicycleController {
         return bicycleService.getMaxBicyclePrice();
     }
 
+    @GetMapping("/count")
+    public Long countBicycles() {
+        return bicycleService.getNumberOfBicycles();
+    }
+
     @PutMapping("/update/{id}")
     public BicycleDTO updateBicycle(@RequestBody @Validated BicycleBaseRequest request, @PathVariable UUID id) {
         return bicycleService.updateBicycle(request, id);
